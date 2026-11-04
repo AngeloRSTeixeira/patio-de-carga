@@ -1,0 +1,37 @@
+from math import sin, cos, pi
+
+from core.matrix import Matrix
+from geometry.parametricGeometry import ParametricGeometry
+from geometry.polygonGeometry import PolygonGeometry
+
+
+class CylindricalGeometry(ParametricGeometry):
+    """Cilindros, prismas, cones e pirâmides; eixo vertical (y)
+    (seção 4.3.4)."""
+
+    def __init__(self, radiusTop=1, radiusBottom=1, height=1,
+                 radialSegments=32, heightSegments=4,
+                 closedTop=True, closedBottom=True):
+
+        def S(u, v):
+            return [(v * radiusTop + (1 - v) * radiusBottom) * sin(u),
+                    height * (v - 0.5),
+                    (v * radiusTop + (1 - v) * radiusBottom) * cos(u)]
+
+        super().__init__(0, 2 * pi, radialSegments,
+                         0, 1, heightSegments, S)
+
+        # tampas: polígonos transformados e juntados à superfície
+        if closedTop:
+            topGeometry = PolygonGeometry(radialSegments, radiusTop)
+            transform = Matrix.makeTranslation(0, height / 2, 0) @ \
+                Matrix.makeRotationY(-pi / 2) @ Matrix.makeRotationX(-pi / 2)
+            topGeometry.applyMatrix(transform)
+            self.merge(topGeometry)
+
+        if closedBottom:
+            bottomGeometry = PolygonGeometry(radialSegments, radiusBottom)
+            transform = Matrix.makeTranslation(0, -height / 2, 0) @ \
+                Matrix.makeRotationY(-pi / 2) @ Matrix.makeRotationX(pi / 2)
+            bottomGeometry.applyMatrix(transform)
+            self.merge(bottomGeometry)
